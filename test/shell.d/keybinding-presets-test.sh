@@ -54,6 +54,29 @@ for (const name of ['missing', '__proto__']) {
 }
 JS
 
+python3 - "$ROOT" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+config = json.loads((root / "config/omarchy/shell.json").read_text())
+if config.get("keybindings") != {"preset": "default"}:
+    raise SystemExit("default shell config does not select the non-modal default preset")
+
+manual = (root / "manual/34-keyboard-mouse-trackpad.md").read_text()
+for expected in ['"preset": "emacs"', '"presets"', '"extends": "default"']:
+    if expected not in manual:
+        raise SystemExit(f"manual does not document user-defined presets: {expected}")
+if "`vim` preset" in manual.lower():
+    raise SystemExit("manual still advertises the deferred Vim preset")
+
+shell_docs = (root / "docs/omarchy-shell.md").read_text()
+if "keybindings.preset" not in shell_docs or "keybindings.presets" not in shell_docs:
+    raise SystemExit("shell contract does not document built-in and named presets")
+print("ok - shell config and docs expose user-defined presets")
+PY
+
 require_compositor "keybinding preset runtime test"
 
 if ! command -v quickshell >/dev/null 2>&1; then

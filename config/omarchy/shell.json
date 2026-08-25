@@ -1,5 +1,8 @@
 {
   "version": 1,
+  "keybindings": {
+    "preset": "default"
+  },
   "idle": {
     "screensaver": 150,
     "lock": 300

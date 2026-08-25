@@ -47,6 +47,38 @@ hl.config({
 })
 ```
 
+### Shell keybinding presets
+
+The Omarchy shell uses the non-modal `default` preset, with Escape for cancel, the arrow keys for movement, and `/` for search. To add Emacs-style keys in the menu, pickers, dropdowns, panels, lock screen, and confirmation dialogs, add this top-level block to `~/.config/omarchy/shell.json`:
+
+```json
+"keybindings": {
+  "preset": "emacs"
+}
+```
+
+The `emacs` preset keeps the default keys and adds `Ctrl + G` for cancel, `Ctrl + N`/`Ctrl + P`/`Ctrl + B`/`Ctrl + F` for movement, and `Ctrl + S` for search. Plain-letter bindings in a custom preset do not override typing inside filter or text fields.
+
+You can also name your own preset and extend either built-in preset. Each action you list replaces that inherited action; an empty list unbinds it:
+
+```json
+"keybindings": {
+  "preset": "my-keys",
+  "presets": {
+    "my-keys": {
+      "extends": "default",
+      "bindings": {
+        "cancel": ["Escape", "Ctrl+Q"],
+        "next": ["Down", "Alt+J"],
+        "search": []
+      }
+    }
+  }
+}
+```
+
+The available actions are `cancel`, `next`, `previous`, `back`, `forward`, and `search`. Chords use `Ctrl`, `Alt`, `Shift`, or `Meta` joined to a key with `+`, such as `Ctrl+N`. Changes to `shell.json` are picked up live.
+
 ### Trackpad gestures
 
 You can also turn on [touchpad gestures](https://wiki.hypr.land/Configuring/Advanced-and-Cool/Gestures/), like swiping with three fingers to change workspaces:
