@@ -165,7 +165,6 @@ Panel {
     if (peer.AddMullvad === true) {
       mullvadPickerOpen = !mullvadPickerOpen
       mullvadRegionIndex = 0
-      if (mullvadPickerOpen) Qt.callLater(function() { if (mullvadSearch) mullvadSearch.forceActiveFocus() })
       return
     }
     if (peer.Mullvad === true) persistRecentMullvad(mullvadRegionKey(peer))
@@ -335,6 +334,14 @@ Panel {
     headerIndex = 0
   }
 
+  function restoreKeyboardFocus() {
+    Qt.callLater(function() {
+      if (root.mullvadPickerOpen) mullvadSearch.forceActiveFocus()
+      else keyCatcher.forceActiveFocus()
+    })
+  }
+  onMullvadPickerOpenChanged: root.restoreKeyboardFocus()
+
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
 
@@ -342,7 +349,7 @@ Panel {
     cursorActive = false
     if (panelFlick) panelFlick.contentY = 0
     tailscale.refresh()
-    Qt.callLater(function() { keyCatcher.forceActiveFocus() })
+    root.restoreKeyboardFocus()
   }
   onPeerIndexChanged: scrollCursorIntoView()
   onExitNodeIndexChanged: scrollCursorIntoView()
@@ -414,7 +421,7 @@ Panel {
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
-      blocked: root.copyMenuOpen
+      blocked: root.copyMenuOpen || root.mullvadPickerOpen
       onMoveRequested: function(dx, dy) {
         if (!root.cursorActive) { root.cursorActive = true; return }
         root.moveCursor(dx, dy)
@@ -613,12 +620,12 @@ Panel {
                     root.activateMullvadRegionCursor()
                   }
                   Keys.onPressed: function(event) {
-                    if (event.key === Qt.Key_Down || event.text === "j") {
+                    if (Keybindings.isNext(event, false)) {
                       root.moveMullvadRegionCursor(1)
                       event.accepted = true
                       return
                     }
-                    if (event.key === Qt.Key_Up || event.text === "k") {
+                    if (Keybindings.isPrevious(event, false)) {
                       root.moveMullvadRegionCursor(-1)
                       event.accepted = true
                       return
@@ -628,9 +635,8 @@ Panel {
                       event.accepted = true
                       return
                     }
-                    if (event.key === Qt.Key_Escape) {
+                    if (Keybindings.isCancel(event, false)) {
                       root.mullvadPickerOpen = false
-                      keyCatcher.forceActiveFocus()
                       event.accepted = true
                     }
                   }
@@ -1004,19 +1010,19 @@ Panel {
         padding: 0
         modal: false
         focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        closePolicy: Popup.CloseOnPressOutside
         function handleKey(event) {
-          if (event.key === Qt.Key_Escape) {
+          if (Keybindings.isCancel(event)) {
             close()
             event.accepted = true
             return
           }
-          if (event.key === Qt.Key_Down || event.text === "j") {
+          if (Keybindings.isNext(event)) {
             peerRow.moveCopyCursor(1)
             event.accepted = true
             return
           }
-          if (event.key === Qt.Key_Up || event.text === "k") {
+          if (Keybindings.isPrevious(event)) {
             peerRow.moveCopyCursor(-1)
             event.accepted = true
             return
@@ -1032,7 +1038,7 @@ Panel {
             peerRow.clampCopyIndex()
             Qt.callLater(function() { copyPopupContent.forceActiveFocus() })
           } else if (root.opened) {
-            Qt.callLater(function() { keyCatcher.forceActiveFocus() })
+            root.restoreKeyboardFocus()
           }
         }
         background: BorderSurface {

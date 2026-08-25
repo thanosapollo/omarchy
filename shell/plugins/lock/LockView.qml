@@ -213,7 +213,7 @@ Item {
             event.accepted = true
             return
           }
-          if (event.key === Qt.Key_Escape || (event.modifiers & Qt.ControlModifier && event.key === Qt.Key_U)) {
+          if (Keybindings.isCancel(event, false) || (event.modifiers & Qt.ControlModifier && event.key === Qt.Key_U)) {
             root.passwordTextEdited("")
             event.accepted = true
           }

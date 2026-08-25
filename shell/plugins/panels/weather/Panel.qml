@@ -624,13 +624,13 @@ Panel {
               onTextChanged: if (root.editingLocation && !root.savingLocation) geocodeDebounce.restart()
 
               Keys.onPressed: function(event) {
-                if (event.key === Qt.Key_Escape) {
+                if (Keybindings.isCancel(event, false)) {
                   root.cancelEditingLocation()
                   event.accepted = true
-                } else if (event.key === Qt.Key_Down) {
+                } else if (Keybindings.isNext(event, false)) {
                   if (root.suggestionIndex < root.locationSuggestions.length - 1) root.suggestionIndex++
                   event.accepted = true
-                } else if (event.key === Qt.Key_Up) {
+                } else if (Keybindings.isPrevious(event, false)) {
                   if (root.suggestionIndex > 0) root.suggestionIndex--
                   event.accepted = true
                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {

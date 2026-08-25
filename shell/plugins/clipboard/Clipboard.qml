@@ -352,21 +352,23 @@ Item {
             return
           }
 
-          if (event.key === Qt.Key_Escape) {
+          if (Keybindings.isCancel(event, false)) {
             if (root.filterText) root.setFilter("")
             else root.close()
             event.accepted = true
           } else if (Util.editsFilter(event, root.filterText)) {
             root.setFilter(Util.editedFilter(event, root.filterText))
             event.accepted = true
+          } else if (Keybindings.isSearch(event, false)) {
+            event.accepted = true
           } else if (event.key === Qt.Key_Delete) {
             if (event.modifiers & Qt.ShiftModifier) root.requestClearHistory()
             else root.removeDisplayIndex(root.selectedIndex)
             event.accepted = true
-          } else if (event.key === Qt.Key_Up) {
+          } else if (Keybindings.isPrevious(event, false)) {
             root.select(-1)
             event.accepted = true
-          } else if (event.key === Qt.Key_Down) {
+          } else if (Keybindings.isNext(event, false)) {
             root.select(1)
             event.accepted = true
           } else if (event.key === Qt.Key_PageUp) {

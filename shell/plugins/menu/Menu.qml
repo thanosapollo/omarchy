@@ -1129,20 +1129,22 @@ Item {
           if (event.key === Qt.Key_Delete) {
             root.requestDeleteSelected()
             event.accepted = true
-          } else if (event.key === Qt.Key_Escape) {
+          } else if (Keybindings.isCancel(event, false)) {
             if (root.filterText) root.setFilter("")
             else root.cancel()
             event.accepted = true
           } else if (Util.editsFilter(event, root.filterText)) {
             root.setFilter(Util.editedFilter(event, root.filterText))
             event.accepted = true
-          } else if ((event.key === Qt.Key_Backspace || event.key === Qt.Key_Left) && !root.filterText) {
+          } else if (Keybindings.isSearch(event, false)) {
+            event.accepted = true
+          } else if ((event.key === Qt.Key_Backspace || Keybindings.isBack(event, false)) && !root.filterText) {
             root.goBack()
             event.accepted = true
-          } else if (event.key === Qt.Key_Up) {
+          } else if (Keybindings.isPrevious(event, false)) {
             root.select(-1)
             event.accepted = true
-          } else if (event.key === Qt.Key_Down) {
+          } else if (Keybindings.isNext(event, false)) {
             root.select(1)
             event.accepted = true
           } else if (event.key === Qt.Key_PageUp) {
@@ -1151,7 +1153,8 @@ Item {
           } else if (event.key === Qt.Key_PageDown) {
             root.select(6)
             event.accepted = true
-          } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Right) {
+          } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
+                     || Keybindings.isForward(event, false)) {
             if (root.dmenuActive) {
               if (root.mode === "input") root.applyDmenuSelection(root.filterText)
               else if (displayModel.count > 0) root.activateIndex(root.cursorActive ? root.selectedIndex : 0)

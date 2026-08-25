@@ -683,13 +683,13 @@ Item {
             // Nothing is visible before the reveal: only let the user back
             // out, never filter into a dead end or apply an unseen pick.
             if (!root.layoutSettled) {
-              if (event.key === Qt.Key_Escape) {
+              if (Keybindings.isCancel(event, false)) {
                 root.cancel()
                 event.accepted = true
               }
               return
             }
-            if (event.key === Qt.Key_Escape) {
+            if (Keybindings.isCancel(event, false)) {
               if (root.filterText) {
                 root.updateFilter("")
               } else {
@@ -705,10 +705,12 @@ Item {
             } else if (root.filterable && Util.editsFilter(event, root.filterText)) {
               root.updateFilter(Util.editedFilter(event, root.filterText))
               event.accepted = true
-            } else if (event.key === Qt.Key_Left || (event.key === Qt.Key_Tab && event.modifiers & Qt.ShiftModifier) || event.key === Qt.Key_Backtab) {
+            } else if (Keybindings.isSearch(event, false) && root.filterable) {
+              event.accepted = true
+            } else if (Keybindings.isBack(event, false) || (event.key === Qt.Key_Tab && event.modifiers & Qt.ShiftModifier) || event.key === Qt.Key_Backtab) {
               root.selectAdjacent(-1)
               event.accepted = true
-            } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Tab) {
+            } else if (Keybindings.isForward(event, false) || event.key === Qt.Key_Tab) {
               root.selectAdjacent(1)
               event.accepted = true
             } else if (root.filterable && event.text && event.text.length === 1 && event.text.charCodeAt(0) >= 32 && event.text.charCodeAt(0) !== 127 && (event.modifiers === Qt.NoModifier || event.modifiers === Qt.ShiftModifier)) {

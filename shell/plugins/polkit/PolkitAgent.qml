@@ -259,7 +259,7 @@ Item {
 
         Keys.priority: Keys.BeforeItem
         Keys.onPressed: function(event) {
-          if (event.key === Qt.Key_Escape) {
+          if (Keybindings.isCancel(event)) {
             root.cancelRequest()
             event.accepted = true
           } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -325,7 +325,7 @@ Item {
             enabled: root.dialogVisible
             onAccepted: root.submitResponse()
             Keys.onPressed: function(event) {
-              if (event.key === Qt.Key_Escape) {
+              if (Keybindings.isCancel(event, false)) {
                 root.cancelRequest()
                 event.accepted = true
               }

@@ -1349,7 +1349,7 @@ Item {
                   }
                   onHasCursorChanged: if (hasCursor) root.ensureCursorVisible(this)
                   Keys.onPressed: function(event) {
-                    if (event.key === Qt.Key_Escape) {
+                    if (Keybindings.isCancel(event, false)) {
                       focus = false
                       event.accepted = true
                     }
@@ -1371,7 +1371,7 @@ Item {
                   }
                   onHasCursorChanged: if (hasCursor) root.ensureCursorVisible(this)
                   Keys.onPressed: function(event) {
-                    if (event.key === Qt.Key_Escape) {
+                    if (Keybindings.isCancel(event, false)) {
                       focus = false
                       event.accepted = true
                     }
