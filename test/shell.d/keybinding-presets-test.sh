@@ -53,3 +53,28 @@ for (const name of ['missing', '__proto__']) {
   assert(!keybindings.matches(fallback, 'next', 'J'), `${name} cannot claim plain letters`)
 }
 JS
+
+require_compositor "keybinding preset runtime test"
+
+if ! command -v quickshell >/dev/null 2>&1; then
+  pass "quickshell not installed; skipping keybinding preset runtime test"
+  exit 0
+fi
+
+test_tmp=$(mktemp -d)
+trap 'rm -rf "$test_tmp"' EXIT
+
+cp "$SHELL_TEST_DIR/fixtures/keybinding-presets/shell.qml" "$test_tmp/shell.qml"
+ln -s "$ROOT/shell/Commons" "$test_tmp/Commons"
+
+output=$(timeout 15 quickshell -p "$test_tmp" --no-color 2>&1) || {
+  printf '%s\n' "$output" >&2
+  fail "keybinding preset runtime fixture exits cleanly"
+}
+
+if ! grep -q "RESULT pass" <<<"$output"; then
+  printf '%s\n' "$output" >&2
+  fail "keybinding presets reconfigure in one process"
+fi
+
+pass "keybinding presets reconfigure in one process"
