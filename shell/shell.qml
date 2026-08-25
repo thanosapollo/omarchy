@@ -40,6 +40,9 @@ ShellRoot {
   // closely enough to render a usable bar; not authoritative.
   readonly property var builtinShellConfig: ({
     version: 1,
+    keybindings: {
+      preset: "default"
+    },
     idle: {
       screensaver: 150,
       lock: 300
@@ -70,6 +73,7 @@ ShellRoot {
 
   onShellConfigChanged: {
     if (failedBarId !== "") failedBarId = ""
+    Keybindings.configure(shellConfig && shellConfig.keybindings)
     pluginRegistry.registryRevision++
     pluginRegistry.pluginsChanged()
   }
@@ -147,6 +151,7 @@ ShellRoot {
   }
 
   Component.onCompleted: {
+    Keybindings.configure(shellConfig && shellConfig.keybindings)
     console.log("omarchy-shell paths",
       "omarchyPath=" + shell.omarchyPath,
       "shellDir=" + Quickshell.shellDir,
