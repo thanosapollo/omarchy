@@ -101,10 +101,11 @@ Item {
 
       Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
-            || event.key === Qt.Key_Space || event.key === Qt.Key_Down) {
+            || event.key === Qt.Key_Space || Keybindings.isNext(event)
+            || Keybindings.isSearch(event)) {
           popup.opened ? popup.close() : popup.open()
           event.accepted = true
-        } else if (event.key === Qt.Key_Escape && popup.opened) {
+        } else if (Keybindings.isCancel(event) && popup.opened) {
           popup.close(); event.accepted = true
         }
       }
@@ -155,6 +156,7 @@ Item {
         topPadding: Border.top(root.popupBorderSpec) + Style.spacing.hairline
         bottomPadding: Border.bottom(root.popupBorderSpec) + Style.spacing.hairline
         focus: true
+        closePolicy: Popup.CloseOnPressOutside
 
         background: BorderSurface {
           color: root.background
@@ -173,14 +175,15 @@ Item {
 
           Keys.priority: Keys.BeforeItem
           Keys.onPressed: function(event) {
-            if (event.key === Qt.Key_Escape) { popup.close(); event.accepted = true }
-            else if (event.key === Qt.Key_Down || event.text === "j") {
+            if (Keybindings.isCancel(event)) { popup.close(); event.accepted = true }
+            else if (Keybindings.isNext(event)) {
               optionList.currentIndex = Math.min(root.options.length - 1, optionList.currentIndex + 1)
               event.accepted = true
-            } else if (event.key === Qt.Key_Up || event.text === "k") {
+            } else if (Keybindings.isPrevious(event)) {
               optionList.currentIndex = Math.max(0, optionList.currentIndex - 1)
               event.accepted = true
-            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
+                       || Keybindings.isForward(event)) {
               optionList.selectCurrent(); event.accepted = true
             }
           }

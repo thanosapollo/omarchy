@@ -123,10 +123,11 @@ Item {
 
       Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
-            || event.key === Qt.Key_Space || event.key === Qt.Key_Down) {
+            || event.key === Qt.Key_Space || Keybindings.isNext(event)
+            || Keybindings.isSearch(event)) {
           popup.opened ? popup.close() : popup.open()
           event.accepted = true
-        } else if (event.key === Qt.Key_Escape && popup.opened) {
+        } else if (Keybindings.isCancel(event) && popup.opened) {
           popup.close(); event.accepted = true
         }
       }
@@ -178,6 +179,7 @@ Item {
         topPadding: Border.top(root.popupBorderSpec) + Style.spacing.hairline
         bottomPadding: Border.bottom(root.popupBorderSpec) + Style.spacing.hairline
         focus: true
+        closePolicy: QQC.Popup.CloseOnPressOutside
 
         background: BorderSurface {
           color: root.background
@@ -216,9 +218,9 @@ Item {
               }
 
               Keys.onPressed: function(event) {
-                if (event.key === Qt.Key_Escape) {
+                if (Keybindings.isCancel(event, false)) {
                   popup.close(); event.accepted = true
-                } else if (event.key === Qt.Key_Down) {
+                } else if (Keybindings.isNext(event, false)) {
                   if (resultList.count > 0) {
                     resultList.currentIndex = 0
                     resultList.forceActiveFocus()
@@ -274,15 +276,15 @@ Item {
 
               Keys.priority: Keys.BeforeItem
               Keys.onPressed: function(event) {
-                if (event.key === Qt.Key_Escape) {
+                if (Keybindings.isCancel(event)) {
                   popup.close(); event.accepted = true
-                } else if (event.key === Qt.Key_Down || event.text === "j") {
+                } else if (Keybindings.isNext(event)) {
                   if (resultList.currentIndex >= resultList.count - 1) {
                     event.accepted = true; return
                   }
                   resultList.currentIndex = resultList.currentIndex + 1
                   event.accepted = true
-                } else if (event.key === Qt.Key_Up || event.text === "k") {
+                } else if (Keybindings.isPrevious(event)) {
                   if (resultList.currentIndex <= 0) {
                     searchField.forceActiveFocus()
                     event.accepted = true; return

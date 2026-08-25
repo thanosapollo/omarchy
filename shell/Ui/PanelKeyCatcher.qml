@@ -1,4 +1,5 @@
 import QtQuick
+import qs.Commons
 
 // Drop-in key dispatcher for keyboard-driven panels. Wraps panel content
 // and emits semantic signals so each panel keeps its own state machine
@@ -48,7 +49,7 @@ Item {
   Keys.onPressed: function(event) {
     if (blocked) return
 
-    if (event.key === Qt.Key_Escape) {
+    if (Keybindings.isCancel(event)) {
       closeRequested(); event.accepted = true; return
     }
     if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
@@ -56,16 +57,16 @@ Item {
       event.accepted = true
       return
     }
-    if (event.key === Qt.Key_Down || event.text === "j") {
+    if (Keybindings.isNext(event)) {
       moveRequested(0, 1); event.accepted = true; return
     }
-    if (event.key === Qt.Key_Up || event.text === "k") {
+    if (Keybindings.isPrevious(event)) {
       moveRequested(0, -1); event.accepted = true; return
     }
-    if (event.key === Qt.Key_Right || event.text === "l") {
+    if (Keybindings.isForward(event)) {
       moveRequested(1, 0); event.accepted = true; return
     }
-    if (event.key === Qt.Key_Left || event.text === "h") {
+    if (Keybindings.isBack(event)) {
       moveRequested(-1, 0); event.accepted = true; return
     }
     if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {

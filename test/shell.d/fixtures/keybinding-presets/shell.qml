@@ -30,7 +30,11 @@ ShellRoot {
       presets: {
         reader: {
           extends: "default",
-          bindings: { next: ["Ctrl+N"] }
+          bindings: {
+            cancel: ["Q"],
+            next: ["Ctrl+N"],
+            search: ["S"]
+          }
         }
       }
     })
@@ -44,6 +48,16 @@ ShellRoot {
     }
     if (!Keybindings.isPrevious(keyEvent(Qt.Key_Up))) {
       fail("custom preset lost inherited Up")
+      return
+    }
+    if (!Keybindings.isCancel(keyEvent(Qt.Key_Q))
+        || Keybindings.isCancel(keyEvent(Qt.Key_Q), false)) {
+      fail("plain custom cancel was not suppressed for text input")
+      return
+    }
+    if (!Keybindings.isSearch(keyEvent(Qt.Key_S))
+        || Keybindings.isSearch(keyEvent(Qt.Key_S), false)) {
+      fail("plain custom search was not suppressed for text input")
       return
     }
 
