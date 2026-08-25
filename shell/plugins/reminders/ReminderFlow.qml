@@ -131,7 +131,7 @@ Item {
 
         Keys.priority: Keys.BeforeItem
         Keys.onPressed: function(event) {
-          if (event.key === Qt.Key_Escape) {
+          if (Keybindings.isCancel(event, false)) {
             if (root.filterText) root.setFilter("")
             else root.dismiss()
             event.accepted = true
