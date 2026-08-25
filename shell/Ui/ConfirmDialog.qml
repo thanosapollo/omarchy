@@ -24,10 +24,11 @@ Item {
   function handleKey(event) {
     if (!root.opened) return false
 
-    if (event.key === Qt.Key_Escape) {
+    if (Keybindings.isCancel(event)) {
       root.canceled()
       return true
-    } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Right || event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+    } else if (Keybindings.isBack(event) || Keybindings.isForward(event)
+        || event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
       root.selectedIndex = root.selectedIndex === 0 ? 1 : 0
       return true
     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {

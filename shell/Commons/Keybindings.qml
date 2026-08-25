@@ -57,10 +57,10 @@ QtObject {
     return Model.matches(preset, action, stroke(event))
   }
 
-  function isCancel(event) { return matches("cancel", event) }
+  function isCancel(event, allowPlainLetters) { return matches("cancel", event, allowPlainLetters) }
   function isNext(event, allowPlainLetters) { return matches("next", event, allowPlainLetters) }
   function isPrevious(event, allowPlainLetters) { return matches("previous", event, allowPlainLetters) }
   function isBack(event, allowPlainLetters) { return matches("back", event, allowPlainLetters) }
   function isForward(event, allowPlainLetters) { return matches("forward", event, allowPlainLetters) }
-  function isSearch(event) { return matches("search", event) }
+  function isSearch(event, allowPlainLetters) { return matches("search", event, allowPlainLetters) }
 }
