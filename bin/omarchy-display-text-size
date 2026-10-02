@@ -5,21 +5,21 @@
 # omarchy:examples=omarchy display text size | omarchy display text size 16 | omarchy display text size reset
 
 # One knob for apparent text size across the desktop. It drives three settings
-# in lockstep, all anchored to the shell default of 12px:
+# in logical pixels, with whole-point rounding for GTK and terminals:
 #   • the omarchy shell's font base-size (~/.config/omarchy/shell.toml [font])
-#   • GNOME/GTK's text-scaling-factor    (12px -> 1.0, quantized so the GTK
-#     interface font lands on a whole point size, so 16 -> 15pt/11pt = 1.3636)
+#   • GNOME/GTK's text-scaling-factor    (requested px -> nearest whole pt at
+#     96 DPI, divided by the GTK interface font's configured point size)
 #   • the terminal font point size       (12px -> 9pt, so terminal_pt = px * 9/12)
 # The shell override layers on top of the active theme (so the size survives
 # theme switches) and the shell watches the file, so shell text re-flows live.
-# Accepts an integer from 9 to 20 (px).
+# Accepts an integer from 9 to 30 (px).
 
 MIN=9
-MAX=20
+MAX=30
 GKEY_SCHEMA="org.gnome.desktop.interface"
 GKEY_NAME="text-scaling-factor"
 
-# Anchors: 12px shell base == factor 1.0 == 9pt terminal font.
+# Defaults restored by reset; requested sizes use the same 96-DPI conversion.
 TERM_DEFAULT_PT=9
 SHELL_DEFAULT_PX=12
 
@@ -49,20 +49,29 @@ current_base_size() {
   ' "$shell_config"
 }
 
+# Stage beside the resolved destination so rename is atomic even with a global
+# TMPDIR on a different filesystem. Keep Stow links and existing file permissions.
+shell_write_temp() {
+  local target="$1" tmp
+  mkdir -p "$(dirname "$target")" || return 1
+  tmp="$(mktemp "$(dirname "$target")/.shell.toml.XXXXXX")" || return 1
+  if [[ -f $target ]] && ! chmod --reference="$target" "$tmp"; then
+    rm -f "$tmp"
+    return 1
+  fi
+  printf '%s\n' "$tmp"
+}
+
 # Upsert base-size under [font]: replace it in place if present, insert it into
 # an existing [font] section, or append a fresh [font] section otherwise. Other
 # sections and keys in the user override are left untouched.
 set_base_size() {
   local size="$1"
-  mkdir -p "$(dirname "$shell_config")"
-
-  if [[ ! -f $shell_config ]]; then
-    printf '[font]\nbase-size = %s\n' "$size" >"$shell_config"
-    return
-  fi
-
-  local tmp
-  tmp="$(mktemp)"
+  local shell_config tmp input
+  shell_config="$(realpath -m -- "$HOME/.config/omarchy/shell.toml")" || return 1
+  tmp="$(shell_write_temp "$shell_config")" || return 1
+  input="$shell_config"
+  [[ -f $input ]] || input=/dev/null
   awk -v val="$size" '
     function emit_base() { print "base-size = " val; done = 1 }
     /^[[:space:]]*\[/ {
@@ -84,21 +93,24 @@ set_base_size() {
         emit_base()
       }
     }
-  ' "$shell_config" >"$tmp"
-  mv "$tmp" "$shell_config"
+  ' "$input" >"$tmp" && mv -T -- "$tmp" "$shell_config" && return 0
+  rm -f "$tmp"
+  return 1
 }
 
 # Drop the base-size line, returning the shell to the theme/default size.
 reset_base_size() {
   [[ -f $shell_config ]] || return 0
-  local tmp
-  tmp="$(mktemp)"
+  local shell_config tmp
+  shell_config="$(realpath -m -- "$HOME/.config/omarchy/shell.toml")" || return 1
+  tmp="$(shell_write_temp "$shell_config")" || return 1
   awk '
     /^[[:space:]]*\[/ { in_font = ($0 ~ /^[[:space:]]*\[font\]([[:space:]]|$)/) }
     in_font && /^[[:space:]]*base-size[[:space:]]*=/ { next }
     { print }
-  ' "$shell_config" >"$tmp"
-  mv "$tmp" "$shell_config"
+  ' "$shell_config" >"$tmp" && mv -T -- "$tmp" "$shell_config" && return 0
+  rm -f "$tmp"
+  return 1
 }
 
 # ---- GTK text-scaling-factor ----
@@ -208,7 +220,7 @@ case "${1:-}" in
     exit 0
     ;;
   reset | default)
-    reset_base_size
+    reset_base_size || exit 1
     gsettings reset "$GKEY_SCHEMA" "$GKEY_NAME" 2>/dev/null || true
     set_terminal_size "$TERM_DEFAULT_PT"
     exit 0
@@ -223,13 +235,13 @@ if [[ ! $size =~ ^[0-9]+$ ]] || ((size < MIN || size > MAX)); then
 fi
 
 # Shell side: base-size in px (the omarchy shell's rem root).
-set_base_size "$size"
+set_base_size "$size" || exit 1
 
-# GTK side: multiplier anchored so 12px == 1.0, quantized so the interface
-# font renders at a whole point size. Raw ratios yield fractional point sizes,
-# which GTK4 menus clip at the ascenders on scale-1 monitors.
-factor="$(awk -v s="$size" -v b="$SHELL_DEFAULT_PX" -v f="$(gtk_font_pt)" \
-  'BEGIN { printf "%.4f", int(f * s / b + 0.5) / f }')"
+# GTK side: convert requested logical pixels to points at 96 DPI, then scale
+# relative to the configured interface font. Round to whole points because
+# fractional point sizes can clip GTK4 menu ascenders on scale-1 monitors.
+factor="$(awk -v s="$size" -v f="$(gtk_font_pt)" \
+  'BEGIN { printf "%.4f", int(s * 72 / 96 + 0.5) / f }')"
 set_factor "$factor"
 
 # Terminal side: point size anchored so 12px == 9pt.

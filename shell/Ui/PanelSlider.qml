@@ -138,6 +138,10 @@ Item {
       root.released(root.liveValue)
       root.liveValue = root.value
     }
+    onCanceled: {
+      root.dragging = false
+      root.liveValue = root.value
+    }
     onWheel: function(wheel) {
       var delta = wheel.angleDelta.y > 0 ? root.step : -root.step
       var next = Math.max(root.minimum, Math.min(root.maximum, root.liveValue + delta))
