@@ -28,7 +28,7 @@ Monitor scaling changes the size of everything. If all you want is bigger or sma
 omarchy display text size 14
 ```
 
-That takes a pixel size between 9 and 20, and moves the Omarchy shell, GTK applications, and your terminal together, so the whole desktop stays in proportion. Run it without an argument to see where you're at, and `omarchy display text size reset` to go back to the default. Foot is the one straggler: it has no way to reload its config, so running terminals keep their old size until you open a new one.
+The Display panel's text-size slider selects every whole pixel size from 12 to 30. The command accepts 9 to 30 pixels (including smaller sizes used by existing setups), and sets the Omarchy shell's exact pixel size while converting GTK interface and terminal text to the nearest whole point at 96 DPI. GTK document fonts and application-specific browser/site zoom can still differ. Run it without an argument to see where you're at, and `omarchy display text size reset` to restore the shell/theme size, native GTK scaling default, and 9pt terminal default. Foot is the one straggler: it has no way to reload its config, so running terminals keep their old size until you open a new one.
 
 ### Extending and mirroring laptop displays
 

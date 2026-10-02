@@ -54,13 +54,15 @@ Panel {
   property int selectedIndex: 0
   property bool cursorActive: false
 
-  // Text size slider — curated macOS-style notches (px). The panel snaps to
-  // these stops; the CLI (omarchy-display-text-size) accepts any integer in range.
-  readonly property var textSizeStops: [9, 10, 11, 12, 14, 16, 20]
+  // Every integer pixel size from 12–30; the CLI also retains 9–11 for callers.
+  readonly property var textSizeStops: Array.from({ length: 19 }, (_, i) => i + 12)
   // While a change is in flight, the chosen stop index overrides the live
   // base-size so the knob doesn't snap back during the file round-trip. -1 =
   // no pending change; follow Style.font.baseSize.
   property int textSizePreviewIndex: -1
+  property int textSizePendingPx: -1
+  property bool textSizeInFlight: false
+  property bool textSizeSucceeded: false
 
   // A text-size change reflows the whole panel (both font and spacing scale),
   // which slides rows under a stationary pointer and fires synthetic hover.
@@ -333,16 +335,49 @@ Panel {
   }
 
   function setTextSize(px) {
+    px = textSizeStops[nearestTextStop(px)]
+    markReflowing()
+    textSizeSettle.stop()
+    textSizePreviewIndex = nearestTextStop(px)
+    textSizePendingPx = px
+    if (!textSizeInFlight) startTextSize()
+  }
+
+  function startTextSize() {
+    var px = textSizePendingPx
+    textSizePendingPx = -1
+    textSizeSucceeded = false
+    textSizeInFlight = true
     textScaleProc.command = ["omarchy-display-text-size", String(px)]
-    if (!textScaleProc.running) textScaleProc.running = true
+    textScaleProc.running = true
+  }
+
+  function finishTextSize() {
+    if (!textSizeInFlight || textScaleProc.running) return
+    textSizeInFlight = false
+    if (textSizePendingPx >= 0) {
+      startTextSize()
+    } else if (!textSizeSucceeded) {
+      textSizePreviewIndex = -1
+    } else {
+      settleTextSize()
+      // A missed/late file notification must not pin an optimistic value forever.
+      if (textSizePreviewIndex >= 0) textSizeSettle.restart()
+    }
+  }
+
+  function settleTextSize() {
+    if (!textSizeInFlight && textSizePendingPx < 0 && textSizePreviewIndex >= 0
+        && Style.font.baseSize === textSizeStops[textSizePreviewIndex]) {
+      textSizePreviewIndex = -1
+      textSizeSettle.stop()
+    }
   }
 
   function adjustTextSize(deltaSteps) {
     var idx = currentTextIndex() + deltaSteps
     if (idx < 0) idx = 0
     if (idx > textSizeStops.length - 1) idx = textSizeStops.length - 1
-    markReflowing()
-    textSizePreviewIndex = idx
     setTextSize(textSizeStops[idx])
   }
 
@@ -435,12 +470,22 @@ Panel {
     onRunningChanged: if (!running) root.refresh()
   }
 
-  // Applies text size via the CLI, which rewrites the shell override file;
-  // Style picks the new base-size up through its own file watch, so there's
-  // nothing to refresh here.
+  // Serialize writes, retaining only the latest request made while busy.
   Process {
     id: textScaleProc
     stdout: StdioCollector { waitForEnd: true }
+    onExited: function(exitCode, exitStatus) {
+      root.textSizeSucceeded = exitCode === 0 && exitStatus === 0
+    }
+    // Deferred until exited has reported its result; also handles spawn failure,
+    // for which exited is not emitted and textSizeSucceeded remains false.
+    onRunningChanged: if (!running) Qt.callLater(root.finishTextSize)
+  }
+
+  Timer {
+    id: textSizeSettle
+    interval: 1500
+    onTriggered: root.textSizePreviewIndex = -1
   }
 
   // Clears the hover-suppression flag once the reflow triggered by a text-size
@@ -459,9 +504,7 @@ Panel {
     target: Style
     function onFontBaseSizeChanged() {
       root.markReflowing()
-      if (root.textSizePreviewIndex >= 0
-          && root.nearestTextStop(Style.font.baseSize) === root.textSizePreviewIndex)
-        root.textSizePreviewIndex = -1
+      root.settleTextSize()
     }
   }
 
