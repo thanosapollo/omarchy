@@ -210,9 +210,9 @@ assert(
   'image picker reveals anyway after a short wait if a preview stalls'
 )
 assert(
-  /if \(!root\.layoutSettled\) \{\s*if \(event\.key === Qt\.Key_Escape\) \{\s*root\.cancel\(\)\s*event\.accepted = true\s*\}\s*return\s*\}/.test(imagePickerQml) &&
+  /if \(!root\.layoutSettled\) \{\s*if \(Keybindings\.isCancel\(event, false\)\) \{\s*root\.cancel\(\)\s*event\.accepted = true\s*\}\s*return\s*\}/.test(imagePickerQml) &&
     imagePickerQml.indexOf('if (!root.layoutSettled) {') < imagePickerQml.indexOf('if (root.filterText) {'),
-  'image picker only accepts Escape before it is visible'
+  'image picker only accepts preset cancel before it is visible'
 )
 
 // Run the QML reveal guards themselves, the way the loadRows handler above

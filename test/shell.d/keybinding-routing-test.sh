@@ -60,11 +60,26 @@ for relative, actions in routes.items():
             raise SystemExit(f"{action} is not routed through the preset in {relative}")
 print("ok - shell navigation paths use the active preset")
 
+# Ctrl+Up/Down and Ctrl+k/j are upstream's separate item-reordering API,
+# not cursor navigation. Preserve that guarded block; everything else routes.
+reorder = '''    if (reorderable && (event.modifiers & Qt.ControlModifier)) {
+      var up = event.key === Qt.Key_Up || event.key === Qt.Key_K
+      var down = event.key === Qt.Key_Down || event.key === Qt.Key_J
+      if (up || down) {
+        reorderRequested(down ? 1 : -1); event.accepted = true; return
+      }
+    }
+'''
 raw_direction = re.compile(r"event\.key\s*===\s*Qt\.Key_(Down|Up|Left|Right)")
 for path in root.rglob("*.qml"):
-    if raw_direction.search(path.read_text()):
+    text = path.read_text()
+    if path.relative_to(root).as_posix() == "Ui/PanelKeyCatcher.qml":
+        if text.count(reorder) != 1:
+            raise SystemExit("upstream's guarded item-reordering contract changed")
+        text = text.replace(reorder, "", 1)
+    if raw_direction.search(text):
         raise SystemExit(f"raw arrow-key handling bypasses presets in {path.relative_to(root)}")
-print("ok - no shell arrow handlers bypass the active preset")
+print("ok - cursor arrows use presets while guarded item reordering is preserved")
 
 text_safe_routes = {
     "Ui/MultiSelect.qml": ["isCancel(event, false)", "isNext(event, false)"],
@@ -141,3 +156,6 @@ if "Keybindings.isSearch(event" in panel_keys or "signal searchRequested()" in p
     raise SystemExit("generic panel key handling swallows search without a filter owner")
 print("ok - generic panels leave search keys to filter owners")
 PY
+
+require_command python3
+python3 "$SHELL_TEST_DIR/fixtures/keybinding-presets/panel-keys.py" "$ROOT"
