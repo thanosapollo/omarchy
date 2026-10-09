@@ -187,6 +187,24 @@ assert_staged vscode.json "a theme the user wrote keeps every file it ships"
 
 pass "a theme the user wrote is not held to the installed-theme list"
 
+# Dotfile managers commonly make each file in a user-authored theme a relative
+# symlink. Staging must copy the file contents: preserving those relative links
+# moves their base directory and leaves the current theme full of dangling links.
+dotfiles="$home/dotfiles/rum"
+mkdir -p "$dotfiles" "$themes/rum"
+write_colors "$dotfiles/colors.toml"
+printf 'os.execute("%s")\n' "$marker" >"$dotfiles/hyprland.lua"
+ln -s ../../../../dotfiles/rum/colors.toml "$themes/rum/colors.toml"
+ln -s ../../../../dotfiles/rum/hyprland.lua "$themes/rum/hyprland.lua"
+[[ -f $themes/rum/colors.toml ]] || fail "the stow-managed source palette resolves before staging"
+
+set_theme rum || fail "omarchy-theme-set applies a stow-managed user theme"
+assert_staged colors.toml "a stow-managed theme keeps its palette"
+[[ ! -L $(staged colors.toml) ]] || fail "a staged palette is a regular file, not a relocated symlink"
+grep -q "$marker" "$(staged hyprland.lua)" || fail "a stow-managed theme keeps its own code"
+
+pass "a user-authored theme dereferences its dotfile symlinks while staging"
+
 # A working copy symlinked into the themes folder is the user's own too.
 ln -s "$mine" "$themes/mine-link"
 set_theme mine-link || fail "omarchy-theme-set applies a symlinked working copy"
